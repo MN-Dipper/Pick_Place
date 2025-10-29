@@ -40,8 +40,8 @@ FRAME_MARKER_SMALL_CFG.markers["frame"].scale = (0.10, 0.10, 0.10)
 
 
 @configclass
-class PickPlaceSceneCfg(InteractiveSceneCfg):
-    """Configuration for the PickPlace scene with a robot and a PickPlace.
+class CabinetSceneCfg(InteractiveSceneCfg):
+    """Configuration for the cabinet scene with a robot and a cabinet.
 
     This is the abstract base implementation, the exact scene is defined in the derived classes
     which need to set the robot and end-effector frames
@@ -52,10 +52,10 @@ class PickPlaceSceneCfg(InteractiveSceneCfg):
     # End-effector, Will be populated by agent env cfg
     ee_frame: FrameTransformerCfg = MISSING
 
-    PickPlace = ArticulationCfg(
-        prim_path="{ENV_REGEX_NS}/PickPlace",
+    cabinet = ArticulationCfg(
+        prim_path="{ENV_REGEX_NS}/Cabinet",
         spawn=sim_utils.UsdFileCfg(
-            usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Sektion_PickPlace/sektion_PickPlace_instanceable.usd",
+            usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Sektion_Cabinet/sektion_cabinet_instanceable.usd",
             activate_contact_sensors=False,
         ),
         init_state=ArticulationCfg.InitialStateCfg(
@@ -84,14 +84,14 @@ class PickPlaceSceneCfg(InteractiveSceneCfg):
         },
     )
 
-    # Frame definitions for the PickPlace.
-    PickPlace_frame = FrameTransformerCfg(
-        prim_path="{ENV_REGEX_NS}/PickPlace/sektion",
+    # Frame definitions for the cabinet.
+    cabinet_frame = FrameTransformerCfg(
+        prim_path="{ENV_REGEX_NS}/Cabinet/sektion",
         debug_vis=True,
-        visualizer_cfg=FRAME_MARKER_SMALL_CFG.replace(prim_path="/Visuals/PickPlaceFrameTransformer"),
+        visualizer_cfg=FRAME_MARKER_SMALL_CFG.replace(prim_path="/Visuals/CabinetFrameTransformer"),
         target_frames=[
             FrameTransformerCfg.FrameCfg(
-                prim_path="{ENV_REGEX_NS}/PickPlace/drawer_handle_top",
+                prim_path="{ENV_REGEX_NS}/Cabinet/drawer_handle_top",
                 name="drawer_handle_top",
                 offset=OffsetCfg(
                     pos=(0.305, 0.0, 0.01),
@@ -139,13 +139,13 @@ class ObservationsCfg:
 
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        PickPlace_joint_pos = ObsTerm(
+        cabinet_joint_pos = ObsTerm(
             func=mdp.joint_pos_rel,
-            params={"asset_cfg": SceneEntityCfg("PickPlace", joint_names=["drawer_top_joint"])},
+            params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
         )
-        PickPlace_joint_vel = ObsTerm(
+        cabinet_joint_vel = ObsTerm(
             func=mdp.joint_vel_rel,
-            params={"asset_cfg": SceneEntityCfg("PickPlace", joint_names=["drawer_top_joint"])},
+            params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
         )
         rel_ee_drawer_distance = ObsTerm(func=mdp.rel_ee_drawer_distance)
 
@@ -175,11 +175,11 @@ class EventCfg:
         },
     )
 
-    PickPlace_physics_material = EventTerm(
+    cabinet_physics_material = EventTerm(
         func=mdp.randomize_rigid_body_material,
         mode="startup",
         params={
-            "asset_cfg": SceneEntityCfg("PickPlace", body_names="drawer_handle_top"),
+            "asset_cfg": SceneEntityCfg("cabinet", body_names="drawer_handle_top"),
             "static_friction_range": (1.0, 1.25),
             "dynamic_friction_range": (1.25, 1.5),
             "restitution_range": (0.0, 0.0),
@@ -224,12 +224,12 @@ class RewardsCfg:
     open_drawer_bonus = RewTerm(
         func=mdp.open_drawer_bonus,
         weight=7.5,
-        params={"asset_cfg": SceneEntityCfg("PickPlace", joint_names=["drawer_top_joint"])},
+        params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
     )
     multi_stage_open_drawer = RewTerm(
         func=mdp.multi_stage_open_drawer,
         weight=1.0,
-        params={"asset_cfg": SceneEntityCfg("PickPlace", joint_names=["drawer_top_joint"])},
+        params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
     )
 
     # 4. Penalize actions for cosmetic reasons
@@ -250,11 +250,11 @@ class TerminationsCfg:
 
 
 @configclass
-class PickPlaceEnvCfg(ManagerBasedRLEnvCfg):
-    """Configuration for the PickPlace environment."""
+class CabinetEnvCfg(ManagerBasedRLEnvCfg):
+    """Configuration for the cabinet environment."""
 
     # Scene settings
-    scene: PickPlaceSceneCfg = PickPlaceSceneCfg(num_envs=4096, env_spacing=2.0)
+    scene: CabinetSceneCfg = CabinetSceneCfg(num_envs=4096, env_spacing=2.0)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
