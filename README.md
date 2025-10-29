@@ -1,8 +1,14 @@
 # Template for Isaac Lab Projects
 
+## 在新环境运行前需要先注册
+
+python -m pip install -e source/<given-project-name>
+
+下面是一个例子
+(isaaclab) mndipper@UBT:~/CODE/Pick_Place$ python -m pip install -e source/Pick_Place
+
+
 ## 运行
-
-
 
 直接运行 scripts/rsl_rl/train.py 
 或者 /home/jddipper/ProgrammingFiles/Pick_Place/scripts/rsl_rl/train.py

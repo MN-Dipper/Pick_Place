@@ -64,6 +64,22 @@ class CabinetSceneCfg(InteractiveSceneCfg):
         ),
     )
 
+
+    # Target tote from demo - static as rigid body
+    target_tote: RigidObjectCfg = RigidObjectCfg(
+        prim_path="{ENV_REGEX_NS}/TargetTote",
+        init_state=RigidObjectCfg.InitialStateCfg(
+            pos=[0.05, 0.5, 0.2],
+            rot=[0, 0, 0, 1],
+        ),
+        spawn=UsdFileCfg(
+            usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/KLT_Bin/small_KLT.usd",
+            scale=(2.14, 2.22, 2.31),
+        ),
+    )
+
+
+
     # ====================================================================YCB Objects on table====================================================================
     cracker_box: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/cracker_box",
