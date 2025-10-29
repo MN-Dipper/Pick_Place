@@ -1,12 +1,9 @@
 # Template for Isaac Lab Projects
 
-## 运行
+## Overview
 
-
-
-直接运行 scripts/rsl_rl/train.py 
-或者 /home/jddipper/ProgrammingFiles/Pick_Place/scripts/rsl_rl/train.py
-
+This project/repository serves as a template for building projects or extensions based on Isaac Lab.
+It allows you to develop in an isolated environment, outside of the core Isaac Lab repository.
 
 **Key Features:**
 
