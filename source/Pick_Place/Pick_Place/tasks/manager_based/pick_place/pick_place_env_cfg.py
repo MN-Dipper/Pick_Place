@@ -21,7 +21,7 @@ from isaaclab.sensors import FrameTransformerCfg
 from isaaclab.sensors.frame_transformer import OffsetCfg
 from isaaclab.utils import configclass
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
-
+from isaaclab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
 from . import mdp
 
 ##
@@ -52,54 +52,66 @@ class CabinetSceneCfg(InteractiveSceneCfg):
     # End-effector, Will be populated by agent env cfg
     ee_frame: FrameTransformerCfg = MISSING
 
-    cabinet = ArticulationCfg(
-        prim_path="{ENV_REGEX_NS}/Cabinet",
-        spawn=sim_utils.UsdFileCfg(
-            usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Sektion_Cabinet/sektion_cabinet_instanceable.usd",
-            activate_contact_sensors=False,
+    # cabinet = ArticulationCfg(
+    #     prim_path="{ENV_REGEX_NS}/Cabinet",
+    #     spawn=sim_utils.UsdFileCfg(
+    #         usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Sektion_Cabinet/sektion_cabinet_instanceable.usd",
+    #         activate_contact_sensors=False,
+    #     ),
+    #     init_state=ArticulationCfg.InitialStateCfg(
+    #         pos=(0.8, 0, 0.4),
+    #         rot=(0.0, 0.0, 0.0, 1.0),
+    #         joint_pos={
+    #             "door_left_joint": 0.0,
+    #             "door_right_joint": 0.0,
+    #             "drawer_bottom_joint": 0.0,
+    #             "drawer_top_joint": 0.0,
+    #         },
+    #     ),
+    #     actuators={
+    #         "drawers": ImplicitActuatorCfg(
+    #             joint_names_expr=["drawer_top_joint", "drawer_bottom_joint"],
+    #             effort_limit_sim=87.0,
+    #             stiffness=10.0,
+    #             damping=1.0,
+    #         ),
+    #         "doors": ImplicitActuatorCfg(
+    #             joint_names_expr=["door_left_joint", "door_right_joint"],
+    #             effort_limit_sim=87.0,
+    #             stiffness=10.0,
+    #             damping=2.5,
+    #         ),
+    #     },
+    # )
+
+    tote_table = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/ToteTable",
+        init_state=AssetBaseCfg.InitialStateCfg(
+            pos=[0.55, 1.25, 0.20], 
+            rot=[0, 0, 0, 1],
         ),
-        init_state=ArticulationCfg.InitialStateCfg(
-            pos=(0.8, 0, 0.4),
-            rot=(0.0, 0.0, 0.0, 1.0),
-            joint_pos={
-                "door_left_joint": 0.0,
-                "door_right_joint": 0.0,
-                "drawer_bottom_joint": 0.0,
-                "drawer_top_joint": 0.0,
-            },
+        spawn=UsdFileCfg(
+            usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/ThorlabsTable/table_instanceable.usd",
+            scale=(2.0, 1.0, 0.8),
         ),
-        actuators={
-            "drawers": ImplicitActuatorCfg(
-                joint_names_expr=["drawer_top_joint", "drawer_bottom_joint"],
-                effort_limit_sim=87.0,
-                stiffness=10.0,
-                damping=1.0,
-            ),
-            "doors": ImplicitActuatorCfg(
-                joint_names_expr=["door_left_joint", "door_right_joint"],
-                effort_limit_sim=87.0,
-                stiffness=10.0,
-                damping=2.5,
-            ),
-        },
     )
 
-    # Frame definitions for the cabinet.
-    cabinet_frame = FrameTransformerCfg(
-        prim_path="{ENV_REGEX_NS}/Cabinet/sektion",
-        debug_vis=True,
-        visualizer_cfg=FRAME_MARKER_SMALL_CFG.replace(prim_path="/Visuals/CabinetFrameTransformer"),
-        target_frames=[
-            FrameTransformerCfg.FrameCfg(
-                prim_path="{ENV_REGEX_NS}/Cabinet/drawer_handle_top",
-                name="drawer_handle_top",
-                offset=OffsetCfg(
-                    pos=(0.305, 0.0, 0.01),
-                    rot=(0.5, 0.5, -0.5, -0.5),  # align with end-effector frame
-                ),
-            ),
-        ],
-    )
+    # # Frame definitions for the cabinet.
+    # cabinet_frame = FrameTransformerCfg(
+    #     prim_path="{ENV_REGEX_NS}/Cabinet/sektion",
+    #     debug_vis=True,
+    #     visualizer_cfg=FRAME_MARKER_SMALL_CFG.replace(prim_path="/Visuals/CabinetFrameTransformer"),
+    #     target_frames=[
+    #         FrameTransformerCfg.FrameCfg(
+    #             prim_path="{ENV_REGEX_NS}/Cabinet/drawer_handle_top",
+    #             name="drawer_handle_top",
+    #             offset=OffsetCfg(
+    #                 pos=(0.305, 0.0, 0.01),
+    #                 rot=(0.5, 0.5, -0.5, -0.5),  # align with end-effector frame
+    #             ),
+    #         ),
+    #     ],
+    # )
 
     # plane
     plane = AssetBaseCfg(
@@ -139,15 +151,15 @@ class ObservationsCfg:
 
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        cabinet_joint_pos = ObsTerm(
-            func=mdp.joint_pos_rel,
-            params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
-        )
-        cabinet_joint_vel = ObsTerm(
-            func=mdp.joint_vel_rel,
-            params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
-        )
-        rel_ee_drawer_distance = ObsTerm(func=mdp.rel_ee_drawer_distance)
+        # cabinet_joint_pos = ObsTerm(
+        #     func=mdp.joint_pos_rel,
+        #     params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
+        # )
+        # cabinet_joint_vel = ObsTerm(
+        #     func=mdp.joint_vel_rel,
+        #     params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
+        # )
+        # rel_ee_drawer_distance = ObsTerm(func=mdp.rel_ee_drawer_distance)
 
         actions = ObsTerm(func=mdp.last_action)
 
@@ -175,17 +187,17 @@ class EventCfg:
         },
     )
 
-    cabinet_physics_material = EventTerm(
-        func=mdp.randomize_rigid_body_material,
-        mode="startup",
-        params={
-            "asset_cfg": SceneEntityCfg("cabinet", body_names="drawer_handle_top"),
-            "static_friction_range": (1.0, 1.25),
-            "dynamic_friction_range": (1.25, 1.5),
-            "restitution_range": (0.0, 0.0),
-            "num_buckets": 16,
-        },
-    )
+    # cabinet_physics_material = EventTerm(
+    #     func=mdp.randomize_rigid_body_material,
+    #     mode="startup",
+    #     params={
+    #         "asset_cfg": SceneEntityCfg("cabinet", body_names="drawer_handle_top"),
+    #         "static_friction_range": (1.0, 1.25),
+    #         "dynamic_friction_range": (1.25, 1.5),
+    #         "restitution_range": (0.0, 0.0),
+    #         "num_buckets": 16,
+    #     },
+    # )
 
     reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
 
@@ -203,38 +215,38 @@ class EventCfg:
 class RewardsCfg:
     """Reward terms for the MDP."""
 
-    # 1. Approach the handle
-    approach_ee_handle = RewTerm(func=mdp.approach_ee_handle, weight=2.0, params={"threshold": 0.2})
-    align_ee_handle = RewTerm(func=mdp.align_ee_handle, weight=0.5)
+    # # 1. Approach the handle
+    # approach_ee_handle = RewTerm(func=mdp.approach_ee_handle, weight=2.0, params={"threshold": 0.2})
+    # align_ee_handle = RewTerm(func=mdp.align_ee_handle, weight=0.5)
 
-    # 2. Grasp the handle
-    approach_gripper_handle = RewTerm(func=mdp.approach_gripper_handle, weight=5.0, params={"offset": MISSING})
-    align_grasp_around_handle = RewTerm(func=mdp.align_grasp_around_handle, weight=0.125)
-    grasp_handle = RewTerm(
-        func=mdp.grasp_handle,
-        weight=0.5,
-        params={
-            "threshold": 0.03,
-            "open_joint_pos": MISSING,
-            "asset_cfg": SceneEntityCfg("robot", joint_names=MISSING),
-        },
-    )
+    # # 2. Grasp the handle
+    # approach_gripper_handle = RewTerm(func=mdp.approach_gripper_handle, weight=5.0, params={"offset": MISSING})
+    # align_grasp_around_handle = RewTerm(func=mdp.align_grasp_around_handle, weight=0.125)
+    # grasp_handle = RewTerm(
+    #     func=mdp.grasp_handle,
+    #     weight=0.5,
+    #     params={
+    #         "threshold": 0.03,
+    #         "open_joint_pos": MISSING,
+    #         "asset_cfg": SceneEntityCfg("robot", joint_names=MISSING),
+    #     },
+    # )
 
-    # 3. Open the drawer
-    open_drawer_bonus = RewTerm(
-        func=mdp.open_drawer_bonus,
-        weight=7.5,
-        params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
-    )
-    multi_stage_open_drawer = RewTerm(
-        func=mdp.multi_stage_open_drawer,
-        weight=1.0,
-        params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
-    )
+    # # 3. Open the drawer
+    # open_drawer_bonus = RewTerm(
+    #     func=mdp.open_drawer_bonus,
+    #     weight=7.5,
+    #     params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
+    # )
+    # multi_stage_open_drawer = RewTerm(
+    #     func=mdp.multi_stage_open_drawer,
+    #     weight=1.0,
+    #     params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
+    # )
 
-    # 4. Penalize actions for cosmetic reasons
-    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-1e-2)
-    joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.0001)
+    # # 4. Penalize actions for cosmetic reasons
+    # action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-1e-2)
+    # joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.0001)
 
 
 @configclass

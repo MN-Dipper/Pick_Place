@@ -76,9 +76,9 @@ class FrankaCabinetEnvCfg(CabinetEnvCfg):
         )
 
         # override rewards
-        self.rewards.approach_gripper_handle.params["offset"] = 0.04
-        self.rewards.grasp_handle.params["open_joint_pos"] = 0.04
-        self.rewards.grasp_handle.params["asset_cfg"].joint_names = ["panda_finger_.*"]
+        # self.rewards.approach_gripper_handle.params["offset"] = 0.04
+        # self.rewards.grasp_handle.params["open_joint_pos"] = 0.04
+        # self.rewards.grasp_handle.params["asset_cfg"].joint_names = ["panda_finger_.*"]
 
 
 @configclass

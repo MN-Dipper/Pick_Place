@@ -24,12 +24,12 @@ def rel_ee_object_distance(env: ManagerBasedRLEnv) -> torch.Tensor:
     return object_data.root_pos_w - ee_tf_data.target_pos_w[..., 0, :]
 
 
-def rel_ee_drawer_distance(env: ManagerBasedRLEnv) -> torch.Tensor:
-    """The distance between the end-effector and the object."""
-    ee_tf_data: FrameTransformerData = env.scene["ee_frame"].data
-    cabinet_tf_data: FrameTransformerData = env.scene["cabinet_frame"].data
+# def rel_ee_drawer_distance(env: ManagerBasedRLEnv) -> torch.Tensor:
+#     """The distance between the end-effector and the object."""
+#     ee_tf_data: FrameTransformerData = env.scene["ee_frame"].data
+#     cabinet_tf_data: FrameTransformerData = env.scene["cabinet_frame"].data
 
-    return cabinet_tf_data.target_pos_w[..., 0, :] - ee_tf_data.target_pos_w[..., 0, :]
+#     return cabinet_tf_data.target_pos_w[..., 0, :] - ee_tf_data.target_pos_w[..., 0, :]
 
 
 def fingertips_pos(env: ManagerBasedRLEnv) -> torch.Tensor:
