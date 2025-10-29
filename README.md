@@ -8,6 +8,14 @@
 或者 /home/jddipper/ProgrammingFiles/Pick_Place/scripts/rsl_rl/train.py
 
 
+在isaac lab路径下
+
+./isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/train.py --task Isaac-Open-Drawer-Franka-v0 --num_envs 32
+
+./isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/play.py --task Isaac-Open-Drawer-Franka-v0 --num_envs 32
+
+
+
 **Key Features:**
 
 - `Isolation` Work outside the core Isaac Lab repository, ensuring that your development efforts remain self-contained.
