@@ -31,10 +31,19 @@ parser.add_argument(
     "--distributed", action="store_true", default=False, help="Run training with multiple GPUs or nodes."
 )
 parser.add_argument("--export_io_descriptors", action="store_true", default=False, help="Export IO descriptors.")
+
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
+
+
+# 将 --enable_cameras 的默认值改为 True
+for action in parser._actions:
+    if action.dest == "enable_cameras":
+        action.default = True
+        break
+
 args_cli, hydra_args = parser.parse_known_args()
 
 # always enable cameras to record video

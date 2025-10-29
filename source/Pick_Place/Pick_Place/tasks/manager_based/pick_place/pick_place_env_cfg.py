@@ -28,7 +28,7 @@ from isaaclab.markers.config import FRAME_MARKER_CFG
 # Pre-defined configs
 ##
 from isaaclab.markers.config import FRAME_MARKER_CFG  # isort: skip
-
+from isaaclab.sensors import CameraCfg
 
 FRAME_MARKER_SMALL_CFG = FRAME_MARKER_CFG.copy()
 FRAME_MARKER_SMALL_CFG.markers["frame"].scale = (0.10, 0.10, 0.10)
@@ -78,6 +78,32 @@ class CabinetSceneCfg(InteractiveSceneCfg):
         ),
     )
 
+
+    camera_head = CameraCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/panda_link6/front_cam",
+        update_period=0.1,
+        height=480,
+        width=640,
+        data_types=["rgb", "distance_to_image_plane"],
+        spawn=sim_utils.PinholeCameraCfg(
+            focal_length=24.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
+        ),
+        offset=CameraCfg.OffsetCfg(pos=(0.2, 0.0, 0.015), rot=(0.5, 0.5, -0.5, 0.5), convention="ros"),
+    )
+
+    camera_overhead = CameraCfg(
+        prim_path="{ENV_REGEX_NS}/OverheadCamera",
+        update_period=0.1,  # 10Hz update rate
+        height=480,
+        width=640,
+        data_types=["rgb", "distance_to_image_plane"],
+        debug_vis=True,  # 启用相机位置调试可视化
+        spawn=sim_utils.PinholeCameraCfg(
+            focal_length=24.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 10.0),
+        ),
+        offset=CameraCfg.OffsetCfg(pos=(0.0, 0.3, 2.5), rot=(0.0, 0.1, 0.0, 0.0),  # 相机向下俯视桌面
+        ),
+    )
 
 
     # ====================================================================YCB Objects on table====================================================================
