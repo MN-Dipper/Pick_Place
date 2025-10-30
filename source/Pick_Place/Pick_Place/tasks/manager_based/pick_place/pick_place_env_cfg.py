@@ -64,6 +64,17 @@ class CabinetSceneCfg(InteractiveSceneCfg):
         ),
     )
 
+    head_table = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/HeadTable",
+        init_state=AssetBaseCfg.InitialStateCfg(
+            pos=[0.75, -0.45, 1.0], 
+            rot=[0.7071, 0, 0, 0.7071],
+        ),
+        spawn=UsdFileCfg(
+            usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/ThorlabsTable/table_instanceable.usd",
+            scale=(2.0, 1.0, 0.01),
+        ),
+    )
 
     # Target tote from demo - static as rigid body
     target_tote: RigidObjectCfg = RigidObjectCfg(
@@ -88,7 +99,7 @@ class CabinetSceneCfg(InteractiveSceneCfg):
         spawn=sim_utils.PinholeCameraCfg(
             focal_length=24.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
         ),
-        offset=CameraCfg.OffsetCfg(pos=(0.2, 0.0, 0.015), rot=(0.5, 0.5, -0.5, 0.5), convention="ros"),
+        offset=CameraCfg.OffsetCfg(pos=(0.3, 0.05, 0.015), rot=(0.61237, 0.35355, -0.61237, 0.35355), convention="ros"),
     )
 
     camera_overhead = CameraCfg(
@@ -110,7 +121,7 @@ class CabinetSceneCfg(InteractiveSceneCfg):
     cracker_box: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/cracker_box",
         init_state=RigidObjectCfg.InitialStateCfg(
-            pos=[0.75 - 0.15, 0 + 0.15, 0.75],
+            pos=[0.75 - 0.15, 0 + 0.15, 0.6],
             rot=[0, 0, 0.7071, -0.7071],  # X轴旋转90度
         ),
         spawn=UsdFileCfg(
@@ -121,7 +132,7 @@ class CabinetSceneCfg(InteractiveSceneCfg):
     sugar_box: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/sugar_box",
         init_state=RigidObjectCfg.InitialStateCfg(
-            pos=[0.75, 0 + 0.15, 0.75],
+            pos=[0.75, 0 + 0.15, 0.6],
             rot=[0, 0, 0.7071, -0.7071],
         ),
         spawn=UsdFileCfg(
@@ -132,7 +143,7 @@ class CabinetSceneCfg(InteractiveSceneCfg):
     tomato_soup_can: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/tomato_soup_can",
         init_state=RigidObjectCfg.InitialStateCfg(
-            pos=[0.75 + 0.15, 0 + 0.15, 0.75],
+            pos=[0.75 + 0.15, 0 + 0.15, 0.6],
             rot=[0, 0, 0.7071, -0.7071],
         ),
         spawn=UsdFileCfg(
@@ -143,7 +154,7 @@ class CabinetSceneCfg(InteractiveSceneCfg):
     mustard_bottle: RigidObjectCfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/mustard_bottle",
         init_state=RigidObjectCfg.InitialStateCfg(
-            pos=[0.75 - 0.15, 0, 0.75],
+            pos=[0.75 - 0.15, 0, 0.6],
             rot=[0, 0, 0.7071, -0.7071],
         ),
         spawn=UsdFileCfg(
