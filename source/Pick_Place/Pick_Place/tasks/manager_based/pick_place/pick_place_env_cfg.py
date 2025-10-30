@@ -24,6 +24,7 @@ from isaaclab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdF
 from . import mdp
 from isaaclab.assets import RigidObject, RigidObjectCfg
 from isaaclab.markers.config import FRAME_MARKER_CFG
+from isaaclab.managers import CurriculumTermCfg as CurrTerm
 ##
 # Pre-defined configs
 ##
@@ -179,7 +180,19 @@ class CabinetSceneCfg(InteractiveSceneCfg):
 ##
 # MDP settings
 ##
+@configclass
+class CommandsCfg:
+    """Command terms for the MDP."""
 
+    object_pose = mdp.UniformPoseCommandCfg(
+        asset_name="robot",
+        body_name="panda_hand",  # will be set by agent env cfg
+        resampling_time_range=(8.0, 8.0),
+        debug_vis=True,
+        ranges=mdp.UniformPoseCommandCfg.Ranges(
+            pos_x=(0.05, 0.06), pos_y=(0.5, 0.6), pos_z=(0.2, 0.3), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+        ),
+    )
 
 @configclass
 class ActionsCfg:
@@ -199,6 +212,8 @@ class ObservationsCfg:
 
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
+
+
         # cabinet_joint_pos = ObsTerm(
         #     func=mdp.joint_pos_rel,
         #     params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
@@ -207,6 +222,10 @@ class ObservationsCfg:
         #     func=mdp.joint_vel_rel,
         #     params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
         # )
+
+        object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
+        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
+
         # rel_ee_drawer_distance = ObsTerm(func=mdp.rel_ee_drawer_distance)
 
         actions = ObsTerm(func=mdp.last_action)
@@ -263,6 +282,31 @@ class EventCfg:
 class RewardsCfg:
     """Reward terms for the MDP."""
 
+    reaching_object = RewTerm(func=mdp.object_ee_distance, params={"std": 0.1}, weight=1.0)
+
+    lifting_object = RewTerm(func=mdp.object_is_lifted, params={"minimal_height": 0.7}, weight=15.0)
+
+    object_goal_tracking = RewTerm(
+        func=mdp.object_goal_distance,
+        params={"std": 0.3, "minimal_height": 0.7, "command_name": "object_pose"},
+        weight=16.0,
+    )
+
+    object_goal_tracking_fine_grained = RewTerm(
+        func=mdp.object_goal_distance,
+        params={"std": 0.05, "minimal_height": 0.7, "command_name": "object_pose"},
+        weight=5.0,
+    )
+
+    # action penalty
+    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
+
+    joint_vel = RewTerm(
+        func=mdp.joint_vel_l2,
+        weight=-1e-4,
+        params={"asset_cfg": SceneEntityCfg("robot")},
+    )
+
     # # 1. Approach the handle
     # approach_ee_handle = RewTerm(func=mdp.approach_ee_handle, weight=2.0, params={"threshold": 0.2})
     # align_ee_handle = RewTerm(func=mdp.align_ee_handle, weight=0.5)
@@ -303,6 +347,21 @@ class TerminationsCfg:
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
 
+    object_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("cracker_box")}
+    )
+
+@configclass
+class CurriculumCfg:
+    """Curriculum terms for the MDP."""
+
+    action_rate = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
+    )
+
+    joint_vel = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
+    )
 
 ##
 # Environment configuration
@@ -318,10 +377,12 @@ class CabinetEnvCfg(ManagerBasedRLEnvCfg):
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
+    commands: CommandsCfg = CommandsCfg()
     # MDP settings
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
     events: EventCfg = EventCfg()
+    curriculum: CurriculumCfg = CurriculumCfg()
 
     def __post_init__(self):
         """Post initialization."""
