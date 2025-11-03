@@ -290,18 +290,18 @@ class RewardsCfg:
     )
 
 
-    lifting_object = RewTerm(func=mdp.object_is_lifted, params={"minimal_height": 0.55}, weight=1.0)
+    lifting_object = RewTerm(func=mdp.object_is_lifted, params={"minimal_height": 0.60}, weight=1.0)
 
 
     object_goal_tracking = RewTerm(
         func=mdp.object_goal_distance,
-        params={"std": 0.3, "minimal_height": 0.55, "command_name": "object_pose"},
+        params={"std": 0.3, "minimal_height": 0.60, "command_name": "object_pose"},
         weight=16.0,
     )
 
     object_goal_tracking_fine_grained = RewTerm(
         func=mdp.object_goal_distance,
-        params={"std": 0.05, "minimal_height": 0.55, "command_name": "object_pose"},
+        params={"std": 0.05, "minimal_height": 0.60, "command_name": "object_pose"},
         weight=5.0,
     )
 
@@ -371,7 +371,7 @@ class CurriculumCfg:
     # )
 
     lift_rate = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "lifting_object", "weight": 30, "num_steps": 15000}
+        func=mdp.modify_reward_weight, params={"term_name": "object_goal_tracking", "weight": 60, "num_steps": 10000}
     )
 
 ##

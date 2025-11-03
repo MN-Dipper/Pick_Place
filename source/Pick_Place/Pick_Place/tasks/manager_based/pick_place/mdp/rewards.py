@@ -74,20 +74,42 @@ def object_goal_distance(
     command_name: str,
     robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
     object_cfg: SceneEntityCfg = SceneEntityCfg("cracker_box"),
+    ee_frame_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame"),
+    gripper_close_threshold: float = 0.025,
+    max_ee_object_distance: float = 0.03,  # 新增：末端执行器与物体的最大距离
 ) -> torch.Tensor:
-    """Reward the agent for tracking the goal pose using tanh-kernel."""
-    # extract the used quantities (to enable type-hinting)
+    """Reward the agent for tracking the goal pose when gripper is closed and close to object."""
     robot: RigidObject = env.scene[robot_cfg.name]
     object: RigidObject = env.scene[object_cfg.name]
+    ee_frame: FrameTransformer = env.scene[ee_frame_cfg.name]
     command = env.command_manager.get_command(command_name)
+    
     # compute the desired position in the world frame
     des_pos_b = command[:, :3]
     des_pos_w, _ = combine_frame_transforms(robot.data.root_pos_w, robot.data.root_quat_w, des_pos_b)
-    # distance of the end-effector to the object: (num_envs,)
+    
+    # distance of the desired position to the object: (num_envs,)
     distance = torch.norm(des_pos_w - object.data.root_pos_w, dim=1)
-    # rewarded if the object is lifted above the threshold
-    # return (object.data.root_pos_w[:, 2] > minimal_height) * (1 - torch.tanh(distance / std))
-    return (object.data.root_pos_w[:, 2] > minimal_height) * (1 - torch.tanh(distance / std))
+    
+    # 计算末端执行器与物体的距离
+    ee_w = ee_frame.data.target_pos_w[..., 0, :]
+    object_ee_distance = torch.norm(object.data.root_pos_w - ee_w, dim=1)
+    
+    # 获取夹爪关节位置
+    gripper_joint_pos = robot.data.joint_pos[:, robot_cfg.joint_ids]
+    
+    # 判断夹爪是否闭合
+    gripper_closed = gripper_joint_pos.mean(dim=1) < gripper_close_threshold
+    
+    # 判断末端执行器是否足够接近物体
+    ee_close_to_object = object_ee_distance < max_ee_object_distance
+    
+    # 同时满足：夹爪闭合 AND 末端执行器接近物体
+    valid_grasp = gripper_closed & ee_close_to_object
+    # 只有在有效抓取时才给予距离奖励
+    return valid_grasp.float() * (1 - torch.tanh(distance / std))
+
+
 
 
 def close_gripper_when_near_object_smooth(
@@ -123,6 +145,7 @@ def close_gripper_when_near_object_smooth(
     
     # Get gripper joint positions
     gripper_joint_pos = robot.data.joint_pos[:, robot_cfg.joint_ids]
+    print('gripper_joint_pos',gripper_joint_pos)
     # print('gripper_joint_pos:', gripper_joint_pos)
     # Calculate distance between end-effector and object
     distance = torch.norm(object_pos_w - ee_pos_w, dim=-1, p=2)
@@ -174,7 +197,7 @@ def close_gripper_when_near_object(
     
     # Get gripper joint positions
     gripper_joint_pos = robot.data.joint_pos[:, robot_cfg.joint_ids]  # (num_envs, num_gripper_joints)
-    
+
     # Calculate distance between end-effector and object
     distance = torch.norm(object_pos_w - ee_pos_w, dim=-1, p=2)  # (num_envs,)
     
