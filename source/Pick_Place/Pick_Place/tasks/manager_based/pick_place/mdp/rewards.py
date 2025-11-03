@@ -23,7 +23,29 @@ def object_is_lifted(
 ) -> torch.Tensor:
     """Reward the agent for lifting the object above the minimal height."""
     object: RigidObject = env.scene[object_cfg.name]
+    # print('object_height',object.data.root_pos_w[:, 2])
     return torch.where(object.data.root_pos_w[:, 2] > minimal_height, 1.0, 0.0)
+
+# def object_is_lifted(
+#     env: ManagerBasedRLEnv, 
+#     minimal_height: float,
+#     object_cfg: SceneEntityCfg = SceneEntityCfg("cracker_box")
+# ) -> torch.Tensor:
+#     object: RigidObject = env.scene[object_cfg.name]
+#     current_height = object.data.root_pos_w[:, 2]
+    
+#     # 计算相对于初始高度的提升量
+#     initial_height = object.data.default_root_state[:, 2]  # 获取初始高度
+#     height_gain = current_height - initial_height
+    
+#     # 计算目标高度增量
+#     target_height_gain = minimal_height - initial_height
+    
+#     # 归一化奖励：从0到1线性增长
+#     reward = height_gain / target_height_gain
+#     reward = torch.clamp(reward, min=0.0, max=1.0)
+    
+#     return reward
 
 
 def object_ee_distance(
@@ -42,7 +64,6 @@ def object_ee_distance(
     ee_w = ee_frame.data.target_pos_w[..., 0, :]
     # Distance of the end-effector to the object: (num_envs,)
     object_ee_distance = torch.norm(cube_pos_w - ee_w, dim=1)
-
     return 1 - torch.tanh(object_ee_distance / std)
 
 
@@ -65,8 +86,107 @@ def object_goal_distance(
     # distance of the end-effector to the object: (num_envs,)
     distance = torch.norm(des_pos_w - object.data.root_pos_w, dim=1)
     # rewarded if the object is lifted above the threshold
+    # return (object.data.root_pos_w[:, 2] > minimal_height) * (1 - torch.tanh(distance / std))
     return (object.data.root_pos_w[:, 2] > minimal_height) * (1 - torch.tanh(distance / std))
 
+
+def close_gripper_when_near_object_smooth(
+    env: ManagerBasedRLEnv,
+    threshold: float,
+    open_joint_pos: float,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("cracker_box"),
+    ee_frame_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame"),
+    robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Reward for closing the gripper when near the object with smooth transition.
+    Unlike the binary threshold version, this function provides a smooth reward that
+    gradually increases as the end-effector approaches the object.
+    Args:
+        env: The environment instance.
+        threshold: The distance scale for the smooth transition (acts as standard deviation).
+        open_joint_pos: The joint position value when the gripper is fully open.
+        object_cfg: Configuration for the target object. Defaults to SceneEntityCfg("cracker_box").
+        ee_frame_cfg: Configuration for the end-effector frame. Defaults to SceneEntityCfg("ee_frame").
+        robot_cfg: Configuration for the robot asset containing gripper joints.
+            Defaults to SceneEntityCfg("robot").
+    Returns:
+        The reward tensor of shape (num_envs,). Uses tanh kernel for smooth transition.
+    """
+    # Extract the used quantities
+    object: RigidObject = env.scene[object_cfg.name]
+    ee_frame: FrameTransformer = env.scene[ee_frame_cfg.name]
+    robot: RigidObject = env.scene[robot_cfg.name]
+    
+    # Get object and end-effector positions
+    object_pos_w = object.data.root_pos_w
+    ee_pos_w = ee_frame.data.target_pos_w[..., 0, :]
+    
+    # Get gripper joint positions
+    gripper_joint_pos = robot.data.joint_pos[:, robot_cfg.joint_ids]
+    # print('gripper_joint_pos:', gripper_joint_pos)
+    # Calculate distance between end-effector and object
+    distance = torch.norm(object_pos_w - ee_pos_w, dim=-1, p=2)
+    # Smooth proximity factor using tanh (closer = higher value)
+    proximity_factor = 1 - torch.tanh(distance / threshold)
+    # print('proximity_factor:', proximity_factor)
+    # Reward for closing gripper
+    closing_reward = torch.sum(open_joint_pos - gripper_joint_pos, dim=-1)
+    # print('closing_reward:', closing_reward)
+    # Combine proximity and closing reward
+    return proximity_factor * closing_reward
+
+
+def close_gripper_when_near_object(
+    env: ManagerBasedRLEnv,
+    threshold: float,
+    open_joint_pos: float,
+    object_cfg: SceneEntityCfg = SceneEntityCfg("cracker_box"),
+    ee_frame_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame"),
+    robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Reward for closing the gripper when the end-effector is close to the object.
+    This function encourages the robot to close its gripper when it is within a certain distance
+    threshold from the target object.
+    Args:
+        env: The environment instance.
+        threshold: The distance threshold below which the gripper should be closed.
+        open_joint_pos: The joint position value when the gripper is fully open.
+            Assumes zero joint position corresponds to fully closed gripper.
+        object_cfg: Configuration for the target object. Defaults to SceneEntityCfg("cracker_box").
+        ee_frame_cfg: Configuration for the end-effector frame. Defaults to SceneEntityCfg("ee_frame").
+        robot_cfg: Configuration for the robot asset containing gripper joints.
+            Defaults to SceneEntityCfg("robot").
+    Returns:
+        The reward tensor of shape (num_envs,). Returns positive reward when close to object
+        and gripper is closing.
+    Note:
+        The reward is computed as the sum of (open_joint_pos - current_joint_pos) for all gripper joints,
+        which means more closed fingers yield higher rewards.
+    """
+    # Extract the used quantities
+    object: RigidObject = env.scene[object_cfg.name]
+    ee_frame: FrameTransformer = env.scene[ee_frame_cfg.name]
+    robot: RigidObject = env.scene[robot_cfg.name]
+    
+    # Get object and end-effector positions
+    object_pos_w = object.data.root_pos_w  # (num_envs, 3)
+    ee_pos_w = ee_frame.data.target_pos_w[..., 0, :]  # (num_envs, 3)
+    
+    # Get gripper joint positions
+    gripper_joint_pos = robot.data.joint_pos[:, robot_cfg.joint_ids]  # (num_envs, num_gripper_joints)
+    
+    # Calculate distance between end-effector and object
+    distance = torch.norm(object_pos_w - ee_pos_w, dim=-1, p=2)  # (num_envs,)
+    
+    # Check if end-effector is close enough to the object
+    is_close = distance <= threshold  # (num_envs,)
+    
+    # Reward for closing gripper (difference between open position and current position)
+    # Larger value means gripper is more closed
+    closing_reward = torch.sum(open_joint_pos - gripper_joint_pos, dim=-1)  # (num_envs,)
+    
+    # Only give reward when close to the object
+    return is_close * closing_reward
 
 
 # def approach_ee_handle(env: ManagerBasedRLEnv, threshold: float) -> torch.Tensor:

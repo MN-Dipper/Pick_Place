@@ -39,7 +39,7 @@ class FrankaCabinetEnvCfg(CabinetEnvCfg):
         self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
             asset_name="robot",
             joint_names=["panda_finger.*"],
-            open_command_expr={"panda_finger_.*": 0.04},
+            open_command_expr={"panda_finger_.*": 0.08},
             close_command_expr={"panda_finger_.*": 0.0},
         )
 

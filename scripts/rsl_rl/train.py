@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(description="Train an RL agent with RSL-RL.")
 parser.add_argument("--video", action="store_true", default=False, help="Record videos during training.")
 parser.add_argument("--video_length", type=int, default=200, help="Length of the recorded video (in steps).")
 parser.add_argument("--video_interval", type=int, default=2000, help="Interval between video recordings (in steps).")
-parser.add_argument("--num_envs", type=int, default=1, help="Number of environments to simulate.")
+parser.add_argument("--num_envs", type=int, default=512, help="Number of environments to simulate.")
 parser.add_argument("--task", type=str, default='Template-Pick-Place-v0', help="Name of the task.")
 parser.add_argument(
     "--agent", type=str, default="rsl_rl_cfg_entry_point", help="Name of the RL agent configuration entry point."
@@ -39,10 +39,17 @@ AppLauncher.add_app_launcher_args(parser)
 
 
 # 将 --enable_cameras 的默认值改为 True
-for action in parser._actions:
-    if action.dest == "enable_cameras":
-        action.default = True
-        break
+# for action in parser._actions:
+#     if action.dest == "enable_cameras":
+#         action.default = True
+#         break
+
+# # 将 --enable_cameras 的默认值改为 True
+# for action in parser._actions:
+#     if action.dest == "headless":
+#         action.default = True
+#         break
+
 
 args_cli, hydra_args = parser.parse_known_args()
 
