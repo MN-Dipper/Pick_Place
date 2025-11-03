@@ -41,8 +41,8 @@ FRAME_MARKER_SMALL_CFG.markers["frame"].scale = (0.10, 0.10, 0.10)
 
 
 @configclass
-class CabinetSceneCfg(InteractiveSceneCfg):
-    """Configuration for the cabinet scene with a robot and a cabinet.
+class PickPlaceSceneCfg(InteractiveSceneCfg):
+    """Configuration for the PickPlace scene with a robot and a PickPlace.
 
     This is the abstract base implementation, the exact scene is defined in the derived classes
     which need to set the robot and end-effector frames
@@ -335,12 +335,12 @@ class RewardsCfg:
     # open_drawer_bonus = RewTerm(
     #     func=mdp.open_drawer_bonus,
     #     weight=7.5,
-    #     params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
+    #     params={"asset_cfg": SceneEntityCfg("PickPlace", joint_names=["drawer_top_joint"])},
     # )
     # multi_stage_open_drawer = RewTerm(
     #     func=mdp.multi_stage_open_drawer,
     #     weight=1.0,
-    #     params={"asset_cfg": SceneEntityCfg("cabinet", joint_names=["drawer_top_joint"])},
+    #     params={"asset_cfg": SceneEntityCfg("PickPlace", joint_names=["drawer_top_joint"])},
     # )
 
     # # 4. Penalize actions for cosmetic reasons
@@ -380,11 +380,11 @@ class CurriculumCfg:
 
 
 @configclass
-class CabinetEnvCfg(ManagerBasedRLEnvCfg):
-    """Configuration for the cabinet environment."""
+class PickPlaceEnvCfg(ManagerBasedRLEnvCfg):
+    """Configuration for the PickPlace environment."""
 
     # Scene settings
-    scene: CabinetSceneCfg = CabinetSceneCfg(num_envs=4096, env_spacing=2.0)
+    scene: PickPlaceSceneCfg = PickPlaceSceneCfg(num_envs=4096, env_spacing=2.0)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
