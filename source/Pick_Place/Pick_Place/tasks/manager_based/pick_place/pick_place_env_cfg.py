@@ -290,19 +290,33 @@ class RewardsCfg:
     )
 
 
-    lifting_object = RewTerm(func=mdp.object_is_lifted, params={"minimal_height": 0.60}, weight=1.0)
+    # lifting_object = RewTerm(func=mdp.object_is_lifted, params={"minimal_height": 0.60}, weight=1.0)
 
 
     object_goal_tracking = RewTerm(
         func=mdp.object_goal_distance,
-        params={"std": 0.3, "minimal_height": 0.60, "command_name": "object_pose"},
+        params={"std": 0.3, "release_distance": 0.18, "command_name": "object_pose"},
         weight=16.0,
     )
 
     object_goal_tracking_fine_grained = RewTerm(
         func=mdp.object_goal_distance,
-        params={"std": 0.05, "minimal_height": 0.60, "command_name": "object_pose"},
+        params={"std": 0.05, "release_distance": 0.18, "command_name": "object_pose"},
         weight=5.0,
+    )
+
+
+    open_gripper_near_goal = RewTerm(
+        func=mdp.open_gripper_near_goal,
+        weight=10.0,  # 调整权重
+        params={
+            "distance_threshold": 0.18,  # 5cm内开始松手
+            "std": 0.1,
+            "command_name": "object_pose",
+            "gripper_close_threshold": 0.03,
+            "max_ee_object_distance": 0.04,
+            "open_joint_pos": 0.08,
+        }
     )
 
     # action penalty
@@ -355,7 +369,7 @@ class TerminationsCfg:
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
 
     object_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("cracker_box")}
+        func=mdp.root_height_below_minimum, params={"minimum_height": 0.05, "asset_cfg": SceneEntityCfg("cracker_box")}
     )
 
 @configclass
@@ -370,10 +384,17 @@ class CurriculumCfg:
     #     func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
     # )
 
-    lift_rate = CurrTerm(
+    object_goal_tracking_rate = CurrTerm(
         func=mdp.modify_reward_weight, params={"term_name": "object_goal_tracking", "weight": 60, "num_steps": 10000}
     )
 
+    object_goal_tracking_fine_grained_rate = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "object_goal_tracking_fine_grained", "weight": 60, "num_steps": 10000}
+    )
+
+    open_gripper_rate = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "open_gripper_near_goal", "weight": 60000, "num_steps": 150000}
+    )
 ##
 # Environment configuration
 ##

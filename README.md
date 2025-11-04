@@ -1,29 +1,41 @@
 # Template for Isaac Lab Projects
 
 ## 在新环境运行前需要先注册
-
+```bash
 python -m pip install -e source/<given-project-name>
-
+```
 下面是一个例子
+```bash
 (isaaclab) mndipper@UBT:~/CODE/Pick_Place$ python -m pip install -e source/Pick_Place
-
+```
 
 ## 运行
 
-直接运行 scripts/rsl_rl/train.py 
-或者 /home/jddipper/ProgrammingFiles/Pick_Place/scripts/rsl_rl/train.py
-
+直接运行 
+```bash
+scripts/rsl_rl/train.py 
+```
+或者 
+```bash
+/home/jddipper/ProgrammingFiles/Pick_Place/scripts/rsl_rl/train.py
+```
 
 在isaac lab路径下
-
+```bash
 ./isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/train.py --task Isaac-Open-Drawer-Franka-v0 --num_envs 32
-
 ./isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/play.py --task Isaac-Open-Drawer-Franka-v0 --num_envs 32
-
+```
 
 如果你想采用过去的pt文件，则采用以下语句：
+```bash
 play.py --checkpoint /home/mndipper/CODE/Pick_Place/logs/rsl_rl/franka_open_drawer/2025-10-31_04-58-43/model_250.pt
+```
 
+如果你想看训练的效果如何，用指令
+```bash
+cd /home/jddipper/IsaacLab
+./isaaclab.sh -p -m tensorboard.main --logdi/home/jddipper/ProgrammingFiles/Pick_Place/logs
+```
 **Key Features:**
 
 - `Isolation` Work outside the core Isaac Lab repository, ensuring that your development efforts remain self-contained.
