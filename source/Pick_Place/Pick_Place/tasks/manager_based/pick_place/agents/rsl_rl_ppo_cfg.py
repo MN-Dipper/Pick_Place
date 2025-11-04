@@ -13,7 +13,7 @@ class PPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 96
     max_iterations = 1500
     save_interval = 50
-    experiment_name = "franka_open_drawer"
+    experiment_name = "PickPlace"
     policy = RslRlPpoActorCriticCfg(
         init_noise_std=1.0,
         actor_obs_normalization=False,
