@@ -212,6 +212,85 @@ def close_gripper_when_near_object(
     return is_close * closing_reward
 
 
+def open_gripper_near_goal(
+    env: ManagerBasedRLEnv,
+    distance_threshold: float,
+    std: float,
+    command_name: str,
+    robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    object_cfg: SceneEntityCfg = SceneEntityCfg("cracker_box"),
+    ee_frame_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame"),
+    gripper_close_threshold: float = 0.025,
+    max_ee_object_distance: float = 0.03,
+    open_joint_pos: float = 0.08,  # 夹爪完全打开时的关节位置
+) -> torch.Tensor:
+    """Reward for opening the gripper when object is near the goal position.
+    
+    This function encourages the robot to release the object when:
+    1. The object is currently grasped (gripper closed and close to object)
+    2. The object is close to the target goal position
+    
+    Args:
+        env: The environment instance.
+        distance_threshold: Distance to goal below which gripper should start opening.
+        std: Standard deviation for smooth reward transition using tanh.
+        command_name: Name of the command containing goal position.
+        robot_cfg: Configuration for the robot. Defaults to SceneEntityCfg("robot").
+        object_cfg: Configuration for the object. Defaults to SceneEntityCfg("cracker_box").
+        ee_frame_cfg: Configuration for end-effector frame. Defaults to SceneEntityCfg("ee_frame").
+        gripper_close_threshold: Joint position threshold for considering gripper as closed.
+        max_ee_object_distance: Maximum distance between EE and object for valid grasp.
+        open_joint_pos: Joint position when gripper is fully open.
+        
+    Returns:
+        The reward tensor of shape (num_envs,).
+    """
+    robot: RigidObject = env.scene[robot_cfg.name]
+    object: RigidObject = env.scene[object_cfg.name]
+    ee_frame: FrameTransformer = env.scene[ee_frame_cfg.name]
+    command = env.command_manager.get_command(command_name)
+    
+    # 计算目标位置在世界坐标系中的位置
+    des_pos_b = command[:, :3]
+    des_pos_w, _ = combine_frame_transforms(robot.data.root_pos_w, robot.data.root_quat_w, des_pos_b)
+    
+    # 计算物体到目标位置的距离
+    object_goal_distance = torch.norm(des_pos_w - object.data.root_pos_w, dim=1)
+    # print('object_goal_distance',object_goal_distance)
+    # 计算末端执行器与物体的距离
+    ee_w = ee_frame.data.target_pos_w[..., 0, :]
+    object_ee_distance = torch.norm(object.data.root_pos_w - ee_w, dim=1)
+    
+    # 获取夹爪关节位置
+    gripper_joint_pos = robot.data.joint_pos[:, [7, 8]]
+    # print('gripper_joint_pos',gripper_joint_pos)
+    # 判断夹爪是否闭合
+    gripper_closed = gripper_joint_pos.mean(dim=1) < gripper_close_threshold
+    
+    # 判断末端执行器是否足够接近物体
+    ee_close_to_object = object_ee_distance < max_ee_object_distance
+    
+    # 判断是否有效抓取
+    valid_grasp = gripper_closed & ee_close_to_object
+    
+    # 计算物体接近目标的程度（使用tanh进行平滑过渡）
+    proximity_to_goal = 1 - torch.tanh(object_goal_distance / std)
+    # print('proximity_to_goal',proximity_to_goal)
+    # 计算夹爪打开程度的奖励（越接近open_joint_pos越好）
+    opening_reward = torch.sum(gripper_joint_pos - gripper_close_threshold, dim=-1)
+    # print('opening_reward',opening_reward)
+    # opening_reward = torch.clamp(opening_reward, min=0.0)  # 确保非负
+    
+    # 只有在有效抓取且接近目标时才给予打开夹爪的奖励
+    near_goal = object_goal_distance < distance_threshold
+    should_release = valid_grasp & near_goal
+    # print('should_release',should_release)
+    # print('opening_reward',opening_reward)
+    # print('should_release,gripper_closed,ee_close_to_object,near_goal',should_release,gripper_closed,ee_close_to_object,near_goal,opening_reward)
+    return should_release * opening_reward
+
+
+
 # def approach_ee_handle(env: ManagerBasedRLEnv, threshold: float) -> torch.Tensor:
 #     r"""Reward the robot for reaching the drawer handle using inverse-square law.
 

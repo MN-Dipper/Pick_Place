@@ -125,7 +125,25 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # create isaac environment
     env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array" if args_cli.video else None)
-
+    # 查看 env 的所有属性和方法
+    print("\n" + "="*50)
+    print("[INFO] Environment Information:")
+    print("="*50)
+    # 观察空间
+    print(f"\nObservation Space: {env.observation_space}")
+    # 动作空间
+    print(f"\nAction Space: {env.action_space}")
+    # 环境数量
+    if hasattr(env.unwrapped, 'num_envs'):
+        print(f"\nNumber of Environments: {env.unwrapped.num_envs}")
+    # 场景信息
+    if hasattr(env.unwrapped, 'scene'):
+        print(f"\nScene: {env.unwrapped.scene}")
+    # 配置信息
+    if hasattr(env.unwrapped, 'cfg'):
+        print(f"\nEnvironment Config:")
+        print_dict(env.unwrapped.cfg.__dict__, nesting=2)
+    print("="*50 + "\n")
     # convert to single-agent instance if required by the RL algorithm
     if isinstance(env.unwrapped, DirectMARLEnv):
         env = multi_agent_to_single_agent(env)
@@ -144,7 +162,6 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # wrap around environment for rsl-rl
     env = RslRlVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
-
     print(f"[INFO]: Loading model checkpoint from: {resume_path}")
     # load previously trained model
     if agent_cfg.class_name == "OnPolicyRunner":
@@ -182,16 +199,53 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     dt = env.unwrapped.step_dt
 
-    # reset environment
+    # 在 play.py 的主循环中修改
+    # 在 main 函数中，reset environment 之后添加这些变量
     obs = env.get_observations()
+    print('obs',obs)
     timestep = 0
+    # ===== 添加以下代码 =====
+    # 获取场景中的物体和机器人
+    unwrapped_env = env.unwrapped
+    robot = unwrapped_env.scene["robot"]
+    cracker_box = unwrapped_env.scene["cracker_box"]
+    # 获取目标位置（从command中）
+    command = unwrapped_env.command_manager.get_command("object_pose")
+    # ===== 添加结束 =====
     # simulate environment
     while simulation_app.is_running():
         start_time = time.time()
+        
         # run everything in inference mode
         with torch.inference_mode():
+            # ===== 添加以下代码 =====
+            # 计算物体到目标位置的距离
+            from isaaclab.utils.math import combine_frame_transforms
+            
+            # 获取目标位置（世界坐标系）
+            des_pos_b = command[:, :3]
+            des_pos_w, _ = combine_frame_transforms(
+                robot.data.root_pos_w, 
+                robot.data.root_quat_w, 
+                des_pos_b
+            )
+            
+            # 计算距离
+            object_pos_w = cracker_box.data.root_pos_w
+            distance = torch.norm(des_pos_w - object_pos_w, dim=1)
+            
             # agent stepping
             actions = policy(obs)
+            print('distance',distance[0])
+            # 当距离小于阈值时，强制夹爪张开
+            if distance[0] < 0.18:  # 假设只有一个环境
+                
+                # 获取当前夹爪关节位置
+                actions[:, 7:] = 0.08 
+                print("Opening gripper!")
+            # ===== 添加结束 =====
+            
+            print('actions',actions)
             # env stepping
             obs, _, _, _ = env.step(actions)
         if args_cli.video:

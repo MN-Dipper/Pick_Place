@@ -295,13 +295,13 @@ class RewardsCfg:
 
     object_goal_tracking = RewTerm(
         func=mdp.object_goal_distance,
-        params={"std": 0.3, "release_distance": 0.18, "command_name": "object_pose"},
+        params={"std": 0.3, "minimal_height": 0.18, "command_name": "object_pose"},
         weight=16.0,
     )
 
     object_goal_tracking_fine_grained = RewTerm(
         func=mdp.object_goal_distance,
-        params={"std": 0.05, "release_distance": 0.18, "command_name": "object_pose"},
+        params={"std": 0.05, "minimal_height": 0.18, "command_name": "object_pose"},
         weight=5.0,
     )
 
