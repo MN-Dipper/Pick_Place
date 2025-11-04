@@ -11,7 +11,7 @@ from . import mdp
 
 from .pick_place_env_cfg import (  # isort: skip
     FRAME_MARKER_SMALL_CFG,
-    CabinetEnvCfg,
+    PickPlaceEnvCfg,
 )
 
 ##
@@ -21,7 +21,7 @@ from isaaclab_assets.robots.franka import FRANKA_PANDA_CFG  # isort: skip
 
 
 @configclass
-class FrankaCabinetEnvCfg(CabinetEnvCfg):
+class FrankaPickPlaceEnvCfg(PickPlaceEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
@@ -39,7 +39,7 @@ class FrankaCabinetEnvCfg(CabinetEnvCfg):
         self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
             asset_name="robot",
             joint_names=["panda_finger.*"],
-            open_command_expr={"panda_finger_.*": 0.04},
+            open_command_expr={"panda_finger_.*": 0.08},
             close_command_expr={"panda_finger_.*": 0.0},
         )
 
@@ -82,7 +82,7 @@ class FrankaCabinetEnvCfg(CabinetEnvCfg):
 
 
 @configclass
-class FrankaCabinetEnvCfg_PLAY(FrankaCabinetEnvCfg):
+class FrankaPickPlaceEnvCfg_PLAY(FrankaPickPlaceEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()

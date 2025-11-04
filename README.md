@@ -21,6 +21,8 @@ python -m pip install -e source/<given-project-name>
 ./isaaclab.sh -p scripts/reinforcement_learning/rsl_rl/play.py --task Isaac-Open-Drawer-Franka-v0 --num_envs 32
 
 
+如果你想采用过去的pt文件，则采用以下语句：
+play.py --checkpoint /home/mndipper/CODE/Pick_Place/logs/rsl_rl/franka_open_drawer/2025-10-31_04-58-43/model_250.pt
 
 **Key Features:**
 
